@@ -69,7 +69,7 @@ def generate_and_save_wordcloud(question_list, font_path='ipag.ttc', width=400, 
         tokens = list(t.tokenize(s, wakati=True))
         a = Analyzer(token_filters=[CompoundNounFilter()])
         #名刺のみ抽出
-        result = [token.base_form for token in t.tokenize(s) if token.part_of_speech.split(',')[0] in ['名詞']]  # 全角スペースを削除 
+        result =  [token.base_form for token in a.analyze(s) if token.part_of_speech.split(',')[0] in ['名詞']]  # 全角スペースを削除 
         results.extend(result) 
     
     text = ' '.join(results)
