@@ -1,0 +1,19 @@
+{% block head %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="title"><h1>Plotlyのグラフを描画</h1></div>
+
+<!-- Line Chart -->
+<div class="graph">
+    <h2>Line Chart</h2>
+    {{ line_chart|safe }}
+</div>
+
+<!-- Bar Chart -->
+<div class="graph">
+    <h2>Bar Chart</h2>
+    {{ bar_chart|safe }}
+</div>
+{% endblock %}
