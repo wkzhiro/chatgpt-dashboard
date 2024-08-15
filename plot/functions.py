@@ -1,6 +1,18 @@
 from azure.cosmos import CosmosClient, exceptions
 from datetime import datetime
 
+from janome.tokenizer import Tokenizer
+from janome.charfilter import *
+from janome.tokenfilter import CompoundNounFilter
+from janome.analyzer import Analyzer
+
+from io import BytesIO
+from wordcloud import WordCloud
+from django.conf import settings
+
+import os
+
+
 class CosmosDBClient:
     def __init__(self, endpoint, key, database_name, container_name):
         self.endpoint = endpoint
@@ -31,3 +43,47 @@ def unix_timestamp_to_month(ts):
     """
     date = datetime.fromtimestamp(ts)
     return date.strftime('%Y-%m')  # 'YYYY-MM'形式
+
+# WordCloudの画像を保存する
+def save_wordcloud_image(wordcloud):
+    # BytesIOオブジェクトに画像を保存
+    buffer = BytesIO()
+    wordcloud.to_image().save(buffer, format='PNG')
+    image_content = buffer.getvalue()
+
+    # Djangoのファイルストレージに保存
+    image_file_name = 'wordcloud_image.png'
+    file_path = os.path.join(settings.MEDIA_ROOT, image_file_name)
+
+    # ファイルに保存
+    with open(file_path, 'wb') as f:
+        f.write(image_content)
+
+    return file_path
+
+def generate_and_save_wordcloud(question_list, font_path='ipag.ttc', width=400, height=300, max_words=500):
+    # WordCloudを生成
+    t = Tokenizer()
+    results = []
+    for s in question_list: 
+        tokens = list(t.tokenize(s, wakati=True))
+        a = Analyzer(token_filters=[CompoundNounFilter()])
+        #名刺のみ抽出
+        result = [token.base_form for token in t.tokenize(s) if token.part_of_speech.split(',')[0] in ['名詞']]  # 全角スペースを削除 
+        results.extend(result) 
+    
+    text = ' '.join(results)
+
+    wordcloud = WordCloud(
+        background_color='white',
+        font_path=font_path,
+        width=width,
+        height=height,
+        max_words=max_words
+    ).generate(text)
+
+    wordcloud_image_path = save_wordcloud_image(wordcloud)
+
+
+    return wordcloud_image_path
+

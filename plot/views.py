@@ -1,6 +1,7 @@
-from django.views.generic import TemplateView  # ❶
+from django.views.generic import TemplateView
+from django.conf import settings
 
-from plot.functions import CosmosDBClient, unix_timestamp_to_month
+from plot.functions import CosmosDBClient, unix_timestamp_to_month, generate_and_save_wordcloud
 from plot.graphs import line_charts, bar_chart
 
 from dotenv import load_dotenv
@@ -8,21 +9,10 @@ import os
 
 from collections import defaultdict
 
-from janome.tokenizer import Tokenizer
-from janome.charfilter import *
-from janome.tokenfilter import *
-from janome.analyzer import Analyzer
-
 import pandas as pd
 import collections
-from wordcloud import WordCloud
 
 
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
-from io import BytesIO
-from django.conf import settings
-from django.urls import reverse
 
 # WordCloudの画像を保存する
 def save_wordcloud_image(wordcloud):
@@ -55,12 +45,14 @@ container_name = os.getenv("CONTAINER_NAME")
 db_client = CosmosDBClient(endpoint, key, database_name, container_name)
 items = db_client.fetch_items("SELECT * FROM c")
 
+#月別に集計
 for item in items:
     ts = item.get('_ts')
     if ts:
         month_year = unix_timestamp_to_month(ts)
         monthly_summary[month_year] += 1
 
+#wordcloudの作成
 question_list =[]
 
 for item in items:
@@ -69,29 +61,7 @@ for item in items:
         question = messages[0]["content"]
         question_list.append(question)
 
-t = Tokenizer()
-results = []
-for s in question_list: 
-    tokens = list(t.tokenize(s, wakati=True))
-    a = Analyzer(token_filters=[CompoundNounFilter()])
-    result = [token.base_form for token in t.tokenize(s) if token.part_of_speech.split(',')[0] in ['名詞']]  # 全角スペースを削除 # リストに追加 results.extend(result)
-    results.extend(result) 
-
-# wordcloud
-#日本語のフォントパス
-font_path = 'ipag.ttc'
-text = ' '.join(results) # 区切り文字を「・」にして文字列に変換
-# 単語の最大表示数は500に設定
-wordcloud = WordCloud(
-    background_color='white',
-    font_path=font_path,
-    width=400,
-    height=300,
-    max_words=500
-).generate(text)
-
-wordcloud_image_path = save_wordcloud_image(wordcloud)
-print(wordcloud_image_path)
+wordcloud_image_path = generate_and_save_wordcloud(question_list)
 
 class ChartsView(TemplateView):  # ❶
     template_name = "plot.html"
