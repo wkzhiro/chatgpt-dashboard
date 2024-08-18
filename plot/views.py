@@ -2,7 +2,7 @@ from django.views.generic import TemplateView
 from django.conf import settings
 
 from plot.functions import CosmosDBClient, unix_timestamp_to_month, generate_and_save_wordcloud
-from plot.graphs import line_charts, bar_chart
+from plot.graphs import line_charts, bar_chart, user_bar_chart
 
 from dotenv import load_dotenv
 import os
@@ -39,6 +39,13 @@ for item in items:
         month_year = unix_timestamp_to_month(ts)
         monthly_summary[month_year] += 1
 
+#ユーザー(oid)別に利用回数を集計
+user_use_count = defaultdict(int)
+for item in items:
+    oid = item.get('oid')
+    if oid:
+        user_use_count[oid] += 1
+
 #wordcloudの作成と会話データの取得
 question_list =[]
 csv_list = []
@@ -67,6 +74,7 @@ class ChartsView(TemplateView):  # ❶
         context = super(ChartsView, self).get_context_data(**kwargs)
         context["line_chart"] = line_charts(monthly_summary)
         context["bar_chart"] = bar_chart(monthly_summary)
+        context["user_bar_chart"] = user_bar_chart(user_use_count)
         # 画像のURLをコンテキストに追加
         context["wordcloud_image_url"] = os.path.join(settings.MEDIA_URL, wordcloud_image_path)
         return context
