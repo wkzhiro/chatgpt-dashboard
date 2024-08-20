@@ -51,3 +51,27 @@ def bar_chart(monthly_data):
         )
     )
     return fig.to_html(include_plotlyjs=False)
+
+def user_bar_chart(user_data):
+    users = list(user_data.keys())
+    values = list(user_data.values())
+
+    sorted_users_values = sorted(zip(users, values), key=lambda x: x[1], reverse=True)
+    users, values = zip(*sorted_users_values)
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(x=users, y=values, name='Data by User'))
+
+    fig.update_layout(
+        title="Data by User",
+        xaxis_title="Users",
+        yaxis_title="Count",
+        width=800, height=400,
+        xaxis=dict(
+            tickmode='array',
+            tickvals=users,
+            ticktext=users,
+            tickangle=-45
+        )
+    )
+    return fig.to_html(include_plotlyjs=False)
