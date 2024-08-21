@@ -1,38 +1,63 @@
+{% load django_bootstrap5 %}
+<head>
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+</head>
 {% block head %}
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 {% endblock %}
 
 {% block content %}
-<div class="title"><h1>Plotlyのグラフを描画</h1></div>
+<div class="container-fluid">
+    <div class="title"><h1>Plotlyのグラフを描画</h1></div>
 
-<!-- Line Chart -->
-<div class="graph">
-    <h2>Line Chart</h2>
-    {{ line_chart|safe }}
+    <div class="row">
+        <!-- Line Chart -->
+        <div class="col-sm-12 col-lg-6 mb-4">
+            <div class="graph">
+                <h2>Line Chart</h2>
+                <div style="width:100%; overflow:hidden;">
+                    {{ line_chart|safe }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Bar Chart -->
+        <div class="col-sm-12 col-lg-6 mb-4">
+            <div class="graph">
+                <h2>Bar Chart</h2>
+                <div style="width:100%; overflow:hidden;">
+                    {{ bar_chart|safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- User Bar Chart -->
+        <div class="col-sm-12 col-lg-6 mb-4">
+            <div class="graph">
+                <h2>User Bar Chart</h2>
+                <div style="width:100%; overflow:hidden;">
+                    {{ user_bar_chart|safe }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Word Cloud -->
+        <div class="col-sm-12 col-lg-6 mb-4">
+            <div class="graph">
+                <h2>WordCloud</h2>
+                <img src="{{ wordcloud_image_url }}" alt="WordCloud Image" class="img-fluid">
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Link -->
+    <div class="row">
+        <div class="col-12">
+            <a href="{% url 'plot:csv_export' %}" class="btn btn-primary">エクスポート</a>
+        </div>
+    </div>
 </div>
-
-<!-- Bar Chart -->
-<div class="graph">
-    <h2>Bar Chart</h2>
-    {{ bar_chart|safe }}
-</div>
-
-<!-- Bar Chart -->
-<div class="graph">
-    <h2>User Bar Chart</h2>
-    {{ user_bar_chart|safe }}
-</div>
-
-<!-- Word Cloud -->
-<div class="graph">
-    <h2>WordCloud</h2>
-    <img src="{{ wordcloud_image_url }}" alt="WordCloud Image" style="width:800px;height:600px;">
-</div>
-
-<!-- Export Link -->
-
-<div>
-    <a href="{% url 'plot:csv_export' %}" class="">エクスポート</a>
-</div>
-
 {% endblock %}

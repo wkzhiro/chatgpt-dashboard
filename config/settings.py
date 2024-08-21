@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize', 
-    'plot'
+    'plot',
+    'django_bootstrap5', # 追加
 ]
 
 MIDDLEWARE = [

@@ -1,15 +1,13 @@
 import plotly.graph_objects as go
 
 def line_charts(monthly_data):
-    # 月ごとの集計データを x (月) と y (値) に分解
     months = list(monthly_data.keys())
     values = list(monthly_data.values())
 
-    # 月ごとにソート
     sorted_months_values = sorted(zip(months, values))
     months, values = zip(*sorted_months_values)
 
-    print("months",months)
+    print("months", months)
     # Plotly グラフの作成
     fig = go.Figure(
         go.Scatter(x=months, y=values, mode='lines+markers', name='Monthly Data'),
@@ -17,16 +15,17 @@ def line_charts(monthly_data):
             title="Monthly Data Overview",
             xaxis_title="Month",
             yaxis_title="Count",
-            width=800, height=400,
+            autosize=True,
+            height=400,  # 高さを固定
             xaxis=dict(
                 tickmode='array',
                 tickvals=months,
-                ticktext=months,  # x軸のラベルとして月のみを表示
-                tickangle=-45    # 月ごとのラベルが重ならないように角度を調整
+                ticktext=months,
+                tickangle=-45
             )
         )
     )
-    return fig.to_html(include_plotlyjs=False)
+    return fig.to_html(full_html=False, include_plotlyjs='cdn')
 
 def bar_chart(monthly_data):
     months = list(monthly_data.keys())
@@ -42,7 +41,8 @@ def bar_chart(monthly_data):
         title="Monthly Data Overview",
         xaxis_title="Month",
         yaxis_title="Count",
-        width=800, height=400,
+        autosize=True,
+        height=400,  # 高さを固定
         xaxis=dict(
             tickmode='array',
             tickvals=months,
@@ -50,7 +50,7 @@ def bar_chart(monthly_data):
             tickangle=-45
         )
     )
-    return fig.to_html(include_plotlyjs=False)
+    return fig.to_html(full_html=False, include_plotlyjs='cdn')
 
 def user_bar_chart(user_data):
     users = list(user_data.keys())
@@ -66,7 +66,8 @@ def user_bar_chart(user_data):
         title="Data by User",
         xaxis_title="Users",
         yaxis_title="Count",
-        width=800, height=400,
+        autosize=True,
+        height=400,  # 高さを固定
         xaxis=dict(
             tickmode='array',
             tickvals=users,
@@ -74,4 +75,4 @@ def user_bar_chart(user_data):
             tickangle=-45
         )
     )
-    return fig.to_html(include_plotlyjs=False)
+    return fig.to_html(full_html=False, include_plotlyjs='cdn')
