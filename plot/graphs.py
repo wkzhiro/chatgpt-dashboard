@@ -1,56 +1,64 @@
 import plotly.graph_objects as go
 
-def line_charts(monthly_data):
-    months = list(monthly_data.keys())
-    values = list(monthly_data.values())
+def line_charts(data, period_type):
+    x = list(data.keys())
+    y = list(data.values())
 
-    sorted_months_values = sorted(zip(months, values))
-    months, values = zip(*sorted_months_values)
-
-    print("months", months)
-    # Plotly グラフの作成
-    fig = go.Figure(
-        go.Scatter(x=months, y=values, mode='lines+markers', name='Monthly Data'),
-        layout=go.Layout(
-            title="Monthly Data Overview",
-            xaxis_title="Month",
-            yaxis_title="Count",
-            autosize=True,
-            height=400,  # 高さを固定
-            xaxis=dict(
-                tickmode='array',
-                tickvals=months,
-                ticktext=months,
-                tickangle=-45
-            )
-        )
-    )
-    return fig.to_html(full_html=False, include_plotlyjs='cdn')
-
-def bar_chart(monthly_data):
-    months = list(monthly_data.keys())
-    values = list(monthly_data.values())
-
-    sorted_months_values = sorted(zip(months, values))
-    months, values = zip(*sorted_months_values)
-
-    fig = go.Figure()
-    fig.add_trace(go.Bar(x=months, y=values, name='Monthly Data'))
-
+    fig = go.Figure(data=go.Scatter(x=x, y=y, mode='lines+markers'))
+    
+    title = f"使用回数 ({get_period_type_label(period_type)})"
     fig.update_layout(
-        title="Monthly Data Overview",
-        xaxis_title="Month",
-        yaxis_title="Count",
-        autosize=True,
-        height=400,  # 高さを固定
+        title=title,
+        xaxis_title=get_period_type_label(period_type),
+        yaxis_title="使用回数",
+        height=500,  # グラフの高さを500ピクセルに設定
+        margin=dict(l=50, r=50, t=50, b=50),  # マージンを調整
         xaxis=dict(
+            tickformat=get_tick_format(period_type),
             tickmode='array',
-            tickvals=months,
-            ticktext=months,
-            tickangle=-45
+            tickvals=x
         )
     )
-    return fig.to_html(full_html=False, include_plotlyjs='cdn')
+
+    return fig.to_html(full_html=False, config={'responsive': True})
+
+def bar_chart(data, period_type):
+    x = list(data.keys())
+    y = list(data.values())
+
+    fig = go.Figure(data=go.Bar(x=x, y=y))
+    
+    title = f"使用回数 ({get_period_type_label(period_type)})"
+    fig.update_layout(
+        title=title,
+        xaxis_title=get_period_type_label(period_type),
+        yaxis_title="使用回数",
+        height=500,  # グラフの高さを500ピクセルに設定
+        margin=dict(l=50, r=50, t=50, b=50),  # マージンを調整
+        xaxis=dict(
+            tickformat=get_tick_format(period_type),
+            tickmode='array',
+            tickvals=x
+        )
+    )
+
+    return fig.to_html(full_html=False, config={'responsive': True})
+
+def get_tick_format(period_type):
+    if period_type == 'yearly':
+        return '%Y'
+    elif period_type == 'quarterly':
+        return '%Y-Q%q'
+    else:  # monthly
+        return '%Y-%m'
+
+def get_period_type_label(period_type):
+    if period_type == 'yearly':
+        return '年'
+    elif period_type == 'quarterly':
+        return '四半期'
+    else:
+        return '月'
 
 def user_bar_chart(user_data):
     users = list(user_data.keys())
