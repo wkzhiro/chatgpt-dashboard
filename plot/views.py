@@ -1,8 +1,8 @@
 from django.views.generic import TemplateView
 from django.conf import settings
 
-from plot.functions import CosmosDBClient, unix_timestamp_to_month, generate_and_save_wordcloud
-from plot.graphs import line_charts, bar_chart, user_bar_chart
+from plot.functions import CosmosDBClient, unix_timestamp_to_month, generate_and_save_wordcloud, unix_timestamp_to_hour
+from plot.graphs import line_charts, bar_chart, user_bar_chart, pie_chart, user_active_time_chart
 
 from dotenv import load_dotenv
 import os
@@ -65,7 +65,38 @@ for item in items:
 wordcloud_image_path = generate_and_save_wordcloud(question_list)
 
 
+# 時間帯別のカウント用辞書
+time_periods_count = defaultdict(int)
 
+# 時間帯の範囲を定義
+early_morning_range = range(0, 9)     # 0:00〜8:59
+morning_range = range(9, 18)          # 9:00〜17:59
+evening_range = range(18, 24)         # 18:00〜23:59
+
+# 各時間帯の初期値を0に設定
+time_periods_count['0:00〜9:00'] = 0
+time_periods_count['18:00〜24:00'] = 0
+for hour in morning_range:
+    time_periods_count[f'{hour}:00〜{hour+1}:00'] = 0
+
+# 各 item の利用時間を分類
+for item in items:
+    ts = item.get('_ts')
+    if ts:
+        # タイムスタンプを月および時間に変換
+        dt = unix_timestamp_to_hour(ts)
+        # print(dt)
+        hour = dt.hour  # 時間を取得
+
+        if hour in early_morning_range:
+            time_periods_count['0:00〜9:00'] += 1
+        elif hour in morning_range:
+            time_periods_count[f'{hour}:00〜{hour+1}:00'] += 1
+        elif hour in evening_range:
+            time_periods_count['18:00〜24:00'] += 1
+
+# 最後の24:00〜9:00の範囲に対応するための調整
+time_periods_count['18:00〜24:00'] += time_periods_count.pop('24:00〜25:00', 0)
 
 class ChartsView(TemplateView):  # ❶
     template_name = "plot.html"
@@ -75,6 +106,11 @@ class ChartsView(TemplateView):  # ❶
         context["line_chart"] = line_charts(monthly_summary)
         context["bar_chart"] = bar_chart(monthly_summary)
         context["user_bar_chart"] = user_bar_chart(user_use_count)
+        context["pie_chart"] = pie_chart(user_use_count)
+        context["user_active_time_chart"] = user_active_time_chart(time_periods_count)
+        # print(time_period_bar_chart(time_periods_count))
+        # print(user_bar_chart(user_use_count))
+
         # 画像のURLをコンテキストに追加
         context["wordcloud_image_url"] = os.path.join(settings.MEDIA_URL, wordcloud_image_path)
         return context
