@@ -50,6 +50,7 @@ def unix_timestamp_to_hour(ts):
     """
     return datetime.fromtimestamp(ts)
 
+
 # WordCloudの画像を保存する
 def save_wordcloud_image(wordcloud):
     # BytesIOオブジェクトに画像を保存

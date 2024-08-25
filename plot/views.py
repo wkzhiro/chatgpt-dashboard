@@ -68,6 +68,7 @@ wordcloud_image_path = generate_and_save_wordcloud(question_list)
 # 時間帯別のカウント用辞書
 time_periods_count = defaultdict(int)
 
+
 # 時間帯の範囲を定義
 early_morning_range = range(0, 9)     # 0:00〜8:59
 morning_range = range(9, 18)          # 9:00〜17:59

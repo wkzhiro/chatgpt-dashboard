@@ -35,7 +35,6 @@ def bar_chart(monthly_data):
 
     fig = go.Figure()
     fig.add_trace(go.Bar(x=months, y=values, name='Monthly Data'))
-
     fig.update_layout(
         title="Monthly Data Overview",
         xaxis_title="Month",

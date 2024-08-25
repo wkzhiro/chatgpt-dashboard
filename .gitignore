@@ -5,6 +5,7 @@ ipag.ttc
 *.png
 venv/
 
+
 # Environments
 # .venv
 # env/
