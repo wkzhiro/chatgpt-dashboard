@@ -8,6 +8,31 @@
 {% endblock %}
 
 {% block content %}
+<!-- 日付と表示方法選択フォーム -->
+<form method="get" class="mb-4">
+    <div class="row">
+        <div class="col-md-3">
+            <label for="start_date">開始日:</label>
+            <input type="date" id="start_date" name="start_date" value="{{ start_date }}" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label for="end_date">終了日:</label>
+            <input type="date" id="end_date" name="end_date" value="{{ end_date }}" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label for="period_type">表示期間:</label>
+            <select id="period_type" name="period_type" class="form-control">
+                <option value="monthly" {% if period_type == 'monthly' %}selected{% endif %}>月</option>
+                <option value="quarterly" {% if period_type == 'quarterly' %}selected{% endif %}>四半期</option>
+                <option value="yearly" {% if period_type == 'yearly' %}selected{% endif %}>年</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary mt-4">フィルター</button>
+        </div>
+    </div>
+</form>
+
 <div class="container-fluid">
     <div class="title"><h1>Plotlyのグラフを描画</h1></div>
 
@@ -44,18 +69,6 @@
             </div>
         </div>
 
-        <!-- Pie Chart -->
-        <div class="col-sm-12 col-lg-6 mb-4">
-            <div class="graph">
-                <h2>User Pie Chart</h2>
-                <div style="width:100%; overflow:hidden;">
-                    {{ pie_chart|safe }}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
         <div class="col-sm-12 col-lg-6 mb-4">
             <div class="graph">
                 <h2>User active time Chart</h2>
