@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
 from plot.functions import CosmosDBClient, unix_timestamp_to_month, generate_and_save_wordcloud, unix_timestamp_to_hour
-from plot.graphs import line_charts, bar_chart, user_bar_chart, pie_chart, user_active_time_chart
+from plot.graphs import line_charts, bar_chart, user_bar_chart, pie_chart, user_active_time_chart, category_bar_chart
 
 from dotenv import load_dotenv
 import os
@@ -60,12 +60,14 @@ class ChartsView(TemplateView):
         user_use_count = self.get_user_use_count(filtered_items)
         question_list = self.get_question_list(filtered_items)
         time_periods_count = self.get_user_active_time(filtered_items)
-        print("timep",time_periods_count)
+        category_count = self.get_category_count(filtered_items)
+        # print("filtered_items",category_count)
 
         context["line_chart"] = line_charts(summary, period_type)
         context["bar_chart"] = bar_chart(summary, period_type)
         context["user_bar_chart"] = user_bar_chart(user_use_count)
         context["user_active_time_chart"] = user_active_time_chart(time_periods_count)
+        context["category_bar_chart"] = category_bar_chart(category_count)
         
         # WordCloudの生成
         wordcloud_image_path = generate_and_save_wordcloud(question_list)
@@ -114,6 +116,17 @@ class ChartsView(TemplateView):
             oid = item.get('oid')
             if oid:
                 count[oid] += 1
+        return count
+    
+    def get_category_count(self, items):
+        count = defaultdict(int)
+        for item in items:
+            categories = item.get('category', [])
+            if isinstance(categories, list):
+                for category in categories:
+                    count[category] += 1
+            else:
+                count[categories] += 1
         return count
     
     def get_user_active_time(self, items):
