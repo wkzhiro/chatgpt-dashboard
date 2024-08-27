@@ -86,6 +86,32 @@ def user_bar_chart(user_data):
     return fig.to_html(full_html=False, include_plotlyjs='cdn')
 
 
+def category_bar_chart(user_data):
+    users = list(user_data.keys())
+    values = list(user_data.values())
+
+    sorted_users_values = sorted(zip(users, values), key=lambda x: x[1], reverse=True)
+    users, values = zip(*sorted_users_values)
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(x=users, y=values, name='category by User'))
+
+    fig.update_layout(
+        title="category by User",
+        xaxis_title="category",
+        yaxis_title="Count",
+        autosize=True,
+        height=400,  # 高さを固定
+        xaxis=dict(
+            tickmode='array',
+            tickvals=users,
+            ticktext=users,
+            tickangle=-45
+        )
+    )
+    return fig.to_html(full_html=False, include_plotlyjs='cdn')
+
+
 def user_active_time_chart(time_periods_count):
     # 時間帯の順序を保つためにソート
     sorted_time_periods = sorted(time_periods_count.items(), key=lambda x: (int(x[0].split(':')[0]), int(x[0].split('〜')[1].split(':')[0])))
