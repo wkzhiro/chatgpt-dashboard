@@ -69,6 +69,21 @@
             </div>
         </div>
 
+        <div class="col-sm-12 col-lg-6 mb-4">
+            <div class="graph">
+                <h2>User active time Chart</h2>
+                {% if user_active_time_chart %}
+                    <div style="width:100%; overflow:hidden;">
+                        {{ user_active_time_chart|safe }}
+                    </div>
+                {% else %}
+                    <p>グラフデータがありません。</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
         <!-- Word Cloud -->
         <div class="col-sm-12 col-lg-6 mb-4">
             <div class="graph">

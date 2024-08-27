@@ -4,8 +4,8 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
-from plot.functions import CosmosDBClient, unix_timestamp_to_month, generate_and_save_wordcloud
-from plot.graphs import line_charts, bar_chart, user_bar_chart
+from plot.functions import CosmosDBClient, unix_timestamp_to_month, generate_and_save_wordcloud, unix_timestamp_to_hour
+from plot.graphs import line_charts, bar_chart, user_bar_chart, pie_chart, user_active_time_chart
 
 from dotenv import load_dotenv
 import os
@@ -59,10 +59,13 @@ class ChartsView(TemplateView):
         summary = self.get_summary(filtered_items, period_type)
         user_use_count = self.get_user_use_count(filtered_items)
         question_list = self.get_question_list(filtered_items)
+        time_periods_count = self.get_user_active_time(filtered_items)
+        print("timep",time_periods_count)
 
         context["line_chart"] = line_charts(summary, period_type)
         context["bar_chart"] = bar_chart(summary, period_type)
         context["user_bar_chart"] = user_bar_chart(user_use_count)
+        context["user_active_time_chart"] = user_active_time_chart(time_periods_count)
         
         # WordCloudの生成
         wordcloud_image_path = generate_and_save_wordcloud(question_list)
@@ -112,9 +115,42 @@ class ChartsView(TemplateView):
             if oid:
                 count[oid] += 1
         return count
+    
+    def get_user_active_time(self, items):
+        time_periods_count = defaultdict(int)
+
+        early_morning_range = range(0, 9)     # 0:00〜8:59
+        morning_range = range(9, 18)          # 9:00〜17:59
+        evening_range = range(18, 24)         # 18:00〜23:59
+
+        time_periods_count['0:00〜9:00'] = 0
+        time_periods_count['18:00〜24:00'] = 0
+
+        for hour in morning_range:
+            time_periods_count[f'{hour}:00〜{hour+1}:00'] = 0
+
+        for item in items:
+            ts = item.get('_ts')
+            if ts:
+                # タイムスタンプを月および時間に変換
+                dt = unix_timestamp_to_hour(ts)
+                # print(dt)
+                hour = dt.hour  # 時間を取得
+
+                if hour in early_morning_range:
+                    time_periods_count['0:00〜9:00'] += 1
+                elif hour in morning_range:
+                    time_periods_count[f'{hour}:00〜{hour+1}:00'] += 1
+                elif hour in evening_range:
+                    time_periods_count['18:00〜24:00'] += 1
+        
+        time_periods_count['18:00〜24:00'] += time_periods_count.pop('24:00〜25:00', 0)
+        # print(time_periods_count)
+        return time_periods_count
 
     def get_question_list(self, items):
         return [item['messages'][0]['content'] for item in items if item.get('messages')]
+    
 
 
 def csv_export(request):

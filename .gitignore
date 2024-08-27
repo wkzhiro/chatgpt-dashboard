@@ -3,3 +3,13 @@ test.ipynb
 db.sqlite3
 ipag.ttc
 *.png
+venv/
+
+
+# Environments
+# .venv
+# env/
+
+# ENV/
+# env.bak/
+# venv.bak/

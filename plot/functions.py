@@ -44,6 +44,13 @@ def unix_timestamp_to_month(ts):
     date = datetime.fromtimestamp(ts)
     return date.strftime('%Y-%m')  # 'YYYY-MM'形式
 
+def unix_timestamp_to_hour(ts):
+    """
+    Unixエポックタイムスタンプを時間単位の datetime オブジェクトに変換する関数
+    """
+    return datetime.fromtimestamp(ts)
+
+
 # WordCloudの画像を保存する
 def save_wordcloud_image(wordcloud):
     # BytesIOオブジェクトに画像を保存
