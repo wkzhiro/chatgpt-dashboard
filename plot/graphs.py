@@ -63,6 +63,8 @@ def get_period_type_label(period_type):
 def user_bar_chart(user_data):
     users = list(user_data.keys())
     values = list(user_data.values())
+    print("users:",users)
+    print("values:",values)
 
     sorted_users_values = sorted(zip(users, values), key=lambda x: x[1], reverse=True)
     users, values = zip(*sorted_users_values)

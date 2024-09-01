@@ -61,6 +61,7 @@ class ChartsView(TemplateView):
         question_list = self.get_question_list(filtered_items)
         time_periods_count = self.get_user_active_time(filtered_items)
         print("timep",time_periods_count)
+        print("user_use_count: ",user_use_count)
 
         context["line_chart"] = line_charts(summary, period_type)
         context["bar_chart"] = bar_chart(summary, period_type)
