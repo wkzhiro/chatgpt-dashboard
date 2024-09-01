@@ -19,6 +19,7 @@ from django.http import HttpResponse
 import csv
 import io
 import urllib.request
+from django.utils.decorators import method_decorator
 
 # .envファイルを読み込む
 load_dotenv()
@@ -42,12 +43,16 @@ def get_date_range_and_period_type(request):
     if not start_date:
         start_date = (timezone.now() - timedelta(days=365)).strftime('%Y-%m-%d')
     if not end_date:
-        end_date = timezone.now().strftime('%Y-%m-%d')
+        end_date = (timezone.now()+ timedelta(days=1)).strftime('%Y-%m-%d')
 
     return start_date, end_date, period_type
 
 class ChartsView(TemplateView):
     template_name = "plot.html"
+
+    @method_decorator(settings.AUTH.login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(ChartsView, self).dispatch(*args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super(ChartsView, self).get_context_data(**kwargs)
@@ -61,7 +66,6 @@ class ChartsView(TemplateView):
         question_list = self.get_question_list(filtered_items)
         time_periods_count = self.get_user_active_time(filtered_items)
         print("timep",time_periods_count)
-        print("user_use_count: ",user_use_count)
 
         context["line_chart"] = line_charts(summary, period_type)
         context["bar_chart"] = bar_chart(summary, period_type)

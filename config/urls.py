@@ -19,13 +19,10 @@ from django.urls import path, include
 from django.views.generic.base import RedirectView
 from django.conf import settings
 
-from . import views
 
 
 urlpatterns = [
     settings.AUTH.urlpattern,
-    path('', views.index),
-    # path("call_downstream_api", views.call_downstream_api),
     path('admin/', admin.site.urls),
-    path('plot',  include(('plot.urls', 'plot'), namespace='plot', )),
+    path('',  include(('plot.urls', 'plot'), namespace='plot', )),
 ]
