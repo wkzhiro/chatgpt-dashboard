@@ -42,7 +42,7 @@ def get_date_range_and_period_type(request):
     if not start_date:
         start_date = (timezone.now() - timedelta(days=365)).strftime('%Y-%m-%d')
     if not end_date:
-        end_date = timezone.now().strftime('%Y-%m-%d')
+        end_date = (timezone.now()+ timedelta(days=1)).strftime('%Y-%m-%d')
 
     return start_date, end_date, period_type
 
