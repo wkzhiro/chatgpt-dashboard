@@ -19,6 +19,7 @@ from django.http import HttpResponse
 import csv
 import io
 import urllib.request
+from django.utils.decorators import method_decorator
 
 # .envファイルを読み込む
 load_dotenv()
@@ -48,6 +49,10 @@ def get_date_range_and_period_type(request):
 
 class ChartsView(TemplateView):
     template_name = "plot.html"
+
+    @method_decorator(settings.AUTH.login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(ChartsView, self).dispatch(*args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super(ChartsView, self).get_context_data(**kwargs)
