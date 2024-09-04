@@ -12,6 +12,19 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 
+import os, random, string
+from dotenv import load_dotenv
+# from ms_identity_python.django import Auth  # pip install "ms_identity_python[django] @ git+https://github.com/azure-samples/ms-identity-python@0.8"
+from identity.django import Auth
+load_dotenv()
+AUTH = Auth(
+    os.getenv('CLIENT_ID'),
+    client_credential=os.getenv('CLIENT_SECRET'),
+    redirect_uri=os.getenv('REDIRECT_URI'),
+    # scopes=os.getenv('SCOPE', "").split(),
+    authority=os.getenv('AUTHORITY'),
+    )
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -40,6 +53,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize', 
     'plot',
     'django_bootstrap5', # 追加
+    "identity",  # To utilize the default templates came with the identity package
 ]
 
 MIDDLEWARE = [
