@@ -17,10 +17,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic.base import RedirectView
+from . import views
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path("call_downstream_api", views.call_downstream_api),
     path('',  include(('plot.urls', 'plot'), namespace='plot', )),
 
 ]
