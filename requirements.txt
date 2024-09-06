@@ -4,3 +4,4 @@ plotly==5.23.0
 janome
 wordcloud
 django-bootstrap5
+identity
