@@ -33,7 +33,7 @@ database_name = os.getenv("DB_NAME")
 container_name = os.getenv("CONTAINER_NAME")
 
 db_client = CosmosDBClient(endpoint, key, database_name, container_name)
-items = db_client.fetch_items("SELECT * FROM c")
+# items = db_client.fetch_items("SELECT * FROM c")
 
 def get_date_range_and_period_type(request):
     start_date = request.GET.get('start_date')
