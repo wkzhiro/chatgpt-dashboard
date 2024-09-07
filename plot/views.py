@@ -24,8 +24,8 @@ from django.utils.decorators import method_decorator
 # .envファイルを読み込む
 load_dotenv()
 
-# 月ごとの集計を格納する辞書
-monthly_summary = defaultdict(int)
+# # 月ごとの集計を格納する辞書
+# monthly_summary = defaultdict(int)
 
 endpoint = os.getenv("ENDPOINT")
 key = os.getenv("COSMOS_KEY")
@@ -33,7 +33,7 @@ database_name = os.getenv("DB_NAME")
 container_name = os.getenv("CONTAINER_NAME")
 
 db_client = CosmosDBClient(endpoint, key, database_name, container_name)
-items = db_client.fetch_items("SELECT * FROM c")
+# items = db_client.fetch_items("SELECT * FROM c")
 
 def get_date_range_and_period_type(request):
     start_date = request.GET.get('start_date')
@@ -47,6 +47,12 @@ def get_date_range_and_period_type(request):
 
     return start_date, end_date, period_type
 
+def fetch_items_within_date_range(start_date, end_date):
+    start_ts = int(datetime.strptime(start_date, '%Y-%m-%d').timestamp())
+    end_ts = int(datetime.strptime(end_date, '%Y-%m-%d').timestamp())
+    query = f"SELECT * FROM c WHERE c._ts >= {start_ts} AND c._ts <= {end_ts}"
+    return db_client.fetch_items(query)
+
 class ChartsView(TemplateView):
     template_name = "plot.html"
 
@@ -58,10 +64,12 @@ class ChartsView(TemplateView):
         context = super(ChartsView, self).get_context_data(**kwargs)
 
         start_date, end_date, period_type = get_date_range_and_period_type(self.request)
+        type = self.request.GET.get('type', '')
 
-        filtered_items = self.filter_items_by_date(items, start_date, end_date)
+        # 指定した期間内のデータを取得
+        filtered_items = fetch_items_within_date_range(start_date, end_date)
 
-        summary = self.get_summary(filtered_items, period_type)
+        summary = self.get_summary(filtered_items, period_type, type)
         user_use_count = self.get_user_use_count(filtered_items)
         question_list = self.get_question_list(filtered_items)
         time_periods_count = self.get_user_active_time(filtered_items)
@@ -81,10 +89,12 @@ class ChartsView(TemplateView):
         context["start_date"] = start_date
         context["end_date"] = end_date
         context["period_type"] = period_type
+        context["type"] = type  # type引数をコンテキストに追加
+
 
         return context
 
-    def get_summary(self, items, period_type):
+    def get_summary(self, items, period_type, type=None):
         summary = defaultdict(int)
         for item in items:
             ts = item.get('_ts')
@@ -98,22 +108,28 @@ class ChartsView(TemplateView):
                 else:  # monthly
                     key = date.strftime('%Y-%m')
                 summary[key] += 1
-        return summary
 
+        if type == "total":
+            cumulative_sum = 0
+            for key in sorted(summary.keys()):
+                cumulative_sum += summary[key]
+                summary[key] = cumulative_sum  # 累計値に変更
+
+        return summary
 
     def filter_items_by_date(self, items, start_date, end_date):
         start_ts = int(datetime.strptime(start_date, '%Y-%m-%d').timestamp())
         end_ts = int(datetime.strptime(end_date, '%Y-%m-%d').timestamp())
         return [item for item in items if start_ts <= item.get('_ts', 0) <= end_ts]
 
-    def get_monthly_summary(self, items):
-        summary = defaultdict(int)
-        for item in items:
-            ts = item.get('_ts')
-            if ts:
-                month_year = unix_timestamp_to_month(ts)
-                summary[month_year] += 1
-        return summary
+    # def get_monthly_summary(self, items):
+    #     summary = defaultdict(int)
+    #     for item in items:
+    #         ts = item.get('_ts')
+    #         if ts:
+    #             month_year = unix_timestamp_to_month(ts)
+    #             summary[month_year] += 1
+    #     return summary
 
     def get_user_use_count(self, items):
         count = defaultdict(int)
@@ -178,25 +194,34 @@ def csv_export(request):
     # GETパラメータから期間を取得
     start_date, end_date, _ = get_date_range_and_period_type(request)
 
-    # 期間でフィルタリングしたデータを取得
-    filtered_items = ChartsView().filter_items_by_date(items, start_date, end_date)
+    # 指定した期間内のデータを取得
+    filtered_items = fetch_items_within_date_range(start_date, end_date)
     
-    for item in filtered_items:
+    for idx, item in enumerate(filtered_items, start=1):  # インデックスを1から開始
+        name = item.get('name')
         messages = item.get('messages')
         category = item.get('category')
+        ts = item.get('_ts')
 
-        if messages:
-            question = messages[0]["content"]
+        if messages and ts:
+            date = datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+            conversation = []
+            for message in messages[:20]:  # 最大20個まで取得
+                role = message.get('role')
+                content = message.get('content')
+                if role in ['user', 'assistant']:
+                    conversation.append(f"{role}: {content}")
+            conversation_text = "\n".join(conversation)  # 改行で結合して1つの文字列にする
             if category:
-                csv_list.append([",".join(category), question])
+                csv_list.append([idx, name, conversation_text, ",".join(category), date])
             else:
-                csv_list.append(["", question])
+                csv_list.append([idx, name, conversation_text, "", date])
     
     filename = urllib.parse.quote(('data.csv'))
     response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
     # Add BOM to the response to help Excel recognize UTF-8 encoding
     response.write('\ufeff'.encode('utf-8'))
     writer = csv.writer(response)
-    writer.writerow(['カテゴリ', '会話'])
+    writer.writerow(['NO', '名前', '会話', 'カテゴリ', '日付'])  # ヘッダーにNOを追加
     writer.writerows(csv_list)
     return response
