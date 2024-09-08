@@ -9,6 +9,9 @@ from plot.graphs import line_charts, bar_chart, user_bar_chart, pie_chart, user_
 
 from dotenv import load_dotenv
 import os
+import json
+import requests
+
 
 from collections import defaultdict
 
@@ -56,9 +59,12 @@ def fetch_items_within_date_range(start_date, end_date):
 class ChartsView(TemplateView):
     template_name = "plot.html"
 
-    @method_decorator(settings.AUTH.login_required)
+    # oidと紐付けるデータフレーム
+    df_mail = pd.DataFrame(columns=['oid', 'mail'])
+
+    @method_decorator(settings.AUTH.login_required(scopes=os.getenv("SCOPE", "").split(",")))
     def dispatch(self, *args, **kwargs):
-        return super(ChartsView, self).dispatch(*args, **kwargs)
+        return super(ChartsView, self).dispatch( *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super(ChartsView, self).get_context_data(**kwargs)
@@ -68,6 +74,10 @@ class ChartsView(TemplateView):
 
         # 指定した期間内のデータを取得
         filtered_items = fetch_items_within_date_range(start_date, end_date)
+
+                # mail addressの取得
+        if self.df_mail.empty:
+            api_result = self.call_graphapi_get_mail(self.request, context=context['context'])
 
         summary = self.get_summary(filtered_items, period_type, type)
         user_use_count = self.get_user_use_count(filtered_items)
@@ -136,7 +146,10 @@ class ChartsView(TemplateView):
         for item in items:
             oid = item.get('oid')
             if oid:
-                count[oid] += 1
+                df_ = self.df_mail[self.df_mail['oid'] == oid]
+                mail=df_['mail'].iloc[0]
+                if mail: 
+                    count[mail] += 1
         return count
     
     def get_category_count(self, items):
@@ -185,6 +198,30 @@ class ChartsView(TemplateView):
     def get_question_list(self, items):
         return [item['messages'][0]['content'] for item in items if item.get('messages')]
     
+    # Instead of using the login_required decorator,
+    # here we demonstrate how to handle the error explicitly.
+    # @settings.AUTH.login_required(scopes=os.getenv("SCOPE", "").split(","))
+    def call_graphapi_get_mail(self, request, *, context):
+        # print("context:",context)
+        
+        api_result = requests.get(  # Use access token to call a web api
+            os.getenv("GRAPH_ENDPOINT"),
+            headers={'Authorization': 'Bearer ' + context['access_token']},
+            timeout=30,
+        ).json() if context.get('access_token') else "Did you forget to set the SCOPE environment variable?"
+        # print("api_result:",api_result)
+        user_data = api_result['value']
+        extracted_data = [{"oid": item["id"], "mail": item["mail"]} for item in user_data]
+        
+        # extracted_dataをDataFrameに変換
+        df_new = pd.DataFrame(extracted_data)
+
+        # df_mailにdf_newを追加（concatを使用）
+        self.df_mail = pd.concat([self.df_mail, df_new], ignore_index=True)
+
+        # DataFrameの表示
+        print(self.df_mail)
+        return api_result['value']
 
 
 def csv_export(request):
