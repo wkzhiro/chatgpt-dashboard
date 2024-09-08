@@ -28,6 +28,13 @@
             </select>
         </div>
         <div class="col-md-3">
+            <label for="type">タイプ:</label>
+            <select id="type" name="type" class="form-control">
+                <option value="" {% if type == '' %}selected{% endif %}>通常</option>
+                <option value="total" {% if type == 'total' %}selected{% endif %}>累計</option>
+            </select>
+        </div>
+        <div class="col-md-3">
             <button type="submit" class="btn btn-primary mt-4">フィルター</button>
         </div>
     </div>
