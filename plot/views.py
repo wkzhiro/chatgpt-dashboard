@@ -5,13 +5,13 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
 from plot.functions import CosmosDBClient, unix_timestamp_to_month, generate_and_save_wordcloud, unix_timestamp_to_hour
-from plot.graphs import line_charts, bar_chart, user_bar_chart, pie_chart, user_active_time_chart, category_bar_chart
+from plot.graphs import line_charts, bar_chart, group_bar_chart,user_bar_chart, pie_chart, user_active_time_chart, category_bar_chart
 
 from dotenv import load_dotenv
 import os
 import json
 import requests
-
+import math
 
 from collections import defaultdict
 
@@ -60,7 +60,7 @@ class ChartsView(TemplateView):
     template_name = "plot.html"
 
     # oidと紐付けるデータフレーム
-    df_mail = pd.DataFrame(columns=['oid', 'mail'])
+    df_graph = pd.DataFrame(columns=['oid', 'mail', 'group_id', 'group_name'])
 
     @method_decorator(settings.AUTH.login_required(scopes=os.getenv("SCOPE", "").split(",")))
     def dispatch(self, *args, **kwargs):
@@ -75,12 +75,12 @@ class ChartsView(TemplateView):
         # 指定した期間内のデータを取得
         filtered_items = fetch_items_within_date_range(start_date, end_date)
 
-                # mail addressの取得
-        if self.df_mail.empty:
-            api_result = self.call_graphapi_get_mail(self.request, context=context['context'])
+        # mail addressとgroup情報の取得
+        if self.df_graph.empty:
+            self.call_graphapi(self.request, context=context['context'])
 
         summary = self.get_summary(filtered_items, period_type, type)
-        user_use_count = self.get_user_use_count(filtered_items)
+        user_use_count,group_use_count = self.get_user_use_count(filtered_items)
         question_list = self.get_question_list(filtered_items)
         time_periods_count = self.get_user_active_time(filtered_items)
         category_count = self.get_category_count(filtered_items)
@@ -88,6 +88,7 @@ class ChartsView(TemplateView):
 
         context["line_chart"] = line_charts(summary, period_type)
         context["bar_chart"] = bar_chart(summary, period_type)
+        context["group_bar_chart"] = group_bar_chart(group_use_count)
         context["user_bar_chart"] = user_bar_chart(user_use_count)
         context["user_active_time_chart"] = user_active_time_chart(time_periods_count)
         context["category_bar_chart"] = category_bar_chart(category_count)
@@ -142,15 +143,32 @@ class ChartsView(TemplateView):
     #     return summary
 
     def get_user_use_count(self, items):
-        count = defaultdict(int)
+        count_ind = defaultdict(int)
+        count_group = defaultdict(int)
         for item in items:
             oid = item.get('oid')
             if oid:
-                df_ = self.df_mail[self.df_mail['oid'] == oid]
-                mail=df_['mail'].iloc[0]
+                # メールアドレスの特定
+                df_1 = self.df_graph[self.df_graph['oid'] == oid]
+                mail=df_1['mail'].iloc[0]
                 if mail: 
-                    count[mail] += 1
-        return count
+                    count_ind[mail] += 1
+                # groupの特定
+                df_2 = self.df_graph[self.df_graph['oid'] == oid]
+                group_name=df_2['group_name'].iloc[0]
+                if group_name: 
+                    count_group[group_name] += 1
+        # group_nameがnanではなく、unknownに変更
+        new_data = {}
+        for key, value in count_group.items():
+            # キーが NaN かどうかを確認して、新しいキーに置き換える
+            if isinstance(key, float) and math.isnan(key):
+                new_data['unknown'] = value
+            else:
+                new_data[key] = value
+        count_group = new_data
+
+        return count_ind,count_group
     
     def get_category_count(self, items):
         count = defaultdict(int)
@@ -201,27 +219,51 @@ class ChartsView(TemplateView):
     # Instead of using the login_required decorator,
     # here we demonstrate how to handle the error explicitly.
     # @settings.AUTH.login_required(scopes=os.getenv("SCOPE", "").split(","))
-    def call_graphapi_get_mail(self, request, *, context):
-        # print("context:",context)
-        
-        api_result = requests.get(  # Use access token to call a web api
-            os.getenv("GRAPH_ENDPOINT"),
-            headers={'Authorization': 'Bearer ' + context['access_token']},
-            timeout=30,
-        ).json() if context.get('access_token') else "Did you forget to set the SCOPE environment variable?"
-        # print("api_result:",api_result)
-        user_data = api_result['value']
-        extracted_data = [{"oid": item["id"], "mail": item["mail"]} for item in user_data]
-        
-        # extracted_dataをDataFrameに変換
-        df_new = pd.DataFrame(extracted_data)
+    def call_graphapi(self, request, *, context):
+        try:
+            # get mail by oid
+            api_result = requests.get(  # Use access token to call a web api
+                os.getenv("GRAPH_ENDPOINT"),
+                headers={'Authorization': 'Bearer ' + context['access_token']},
+                timeout=30,
+            ).json() if context.get('access_token') else "Did you forget to set the SCOPE environment variable?"
+            user_data = api_result['value']
+            user_mail_data = [{"oid": item["id"], "mail": item["mail"]} for item in user_data]
+            df_user = pd.DataFrame(user_mail_data)
 
-        # df_mailにdf_newを追加（concatを使用）
-        self.df_mail = pd.concat([self.df_mail, df_new], ignore_index=True)
+            # group_id と group_nameの取得
+            api_result = requests.get(  # Use access token to call a web api
+                "https://graph.microsoft.com/v1.0/groups",
+                headers={'Authorization': 'Bearer ' + context['access_token']},
+                timeout=30,
+            ).json() if context.get('access_token') else "Did you forget to set the SCOPE environment variable?"
+            group_data = api_result['value']
+            groups_name = [{"group_id": item["id"], "group_name": item["displayName"]} for item in group_data]
+            # oidとgroup_id,group_nameの紐付け
+            member_data =[]
+            for data in groups_name:
+                endpoint = "https://graph.microsoft.com/v1.0/groups/{}/members".format(data["group_id"])
+                api_result = requests.get(  # Use access token to call a web api
+                    endpoint,
+                    headers={'Authorization': 'Bearer ' + context['access_token']},
+                    timeout=30,
+                ).json() if context.get('access_token') else "Did you forget to set the SCOPE environment variable?"
 
-        # DataFrameの表示
-        print(self.df_mail)
-        return api_result['value']
+                members = api_result['value']
+                member_data += [{"oid": member["id"], "group_id": data["group_id"],"group_name":data["group_name"]} for member in members]
+            df_member = pd.DataFrame(member_data)
+            df_member = df_member.drop_duplicates(subset='oid', keep='first')
+
+            # df_userにdf_memberにmerge
+            df_user = df_user.merge(df_member, on='oid', how='left')
+
+            # df_graphにdf_userを追加（concatを使用）
+            self.df_graph = pd.concat([self.df_graph, df_user], ignore_index=True)
+        
+        except Exception as e:
+            # エラーが発生した場合にエラーメッセージを返す
+            return f"Graph API error occurred: {str(e)}"
+
 
 
 def csv_export(request):
