@@ -20,7 +20,6 @@ from django.views.generic.base import RedirectView
 from django.conf import settings
 
 
-
 urlpatterns = [
     settings.AUTH.urlpattern,
     path('admin/', admin.site.urls),

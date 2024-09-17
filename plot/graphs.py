@@ -60,6 +60,31 @@ def get_period_type_label(period_type):
     else:
         return '月'
 
+def group_bar_chart(user_data):
+    groups = list(user_data.keys())
+    values = list(user_data.values())
+
+    sorted_groups_values = sorted(zip(groups, values), key=lambda x: x[1], reverse=True)
+    groups, values = zip(*sorted_groups_values)
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(x=groups, y=values, name='Data by User'))
+
+    fig.update_layout(
+        title="Data by Group",
+        xaxis_title="Groups",
+        yaxis_title="Count",
+        autosize=True,
+        height=400,  # 高さを固定
+        xaxis=dict(
+            tickmode='array',
+            tickvals=groups,
+            ticktext=groups,
+            tickangle=-45
+        )
+    )
+    return fig.to_html(full_html=False, include_plotlyjs='cdn')
+
 def user_bar_chart(user_data):
     users = list(user_data.keys())
     values = list(user_data.values())

@@ -74,6 +74,13 @@
             </select>
         </div>
         <div class="col-md-3">
+            <label for="type">タイプ:</label>
+            <select id="type" name="type" class="form-control">
+                <option value="" {% if type == '' %}selected{% endif %}>通常</option>
+                <option value="total" {% if type == 'total' %}selected{% endif %}>累計</option>
+            </select>
+        </div>
+        <div class="col-md-3">
             <button type="submit" class="btn btn-primary mt-4">フィルター</button>
         </div>
     </div>
@@ -143,14 +150,22 @@
       </div>
 
       <!-- Bar Chart -->
-      <div class="col-sm-12 col-lg-4 mb-4">
+      <!-- <div class="col-sm-12 col-lg-4 mb-4">
           <div class="card" style="background-color: #f8f9fa; border-radius: 15px; border: none;">
             <h5 class="text-start p-3">部門別利用回数</h5>
-              <div class="p-5"> <!-- コンテンツの外側に余白を追加 -->
+              <div class="p-5"> 
                   <div style="width:100%; overflow:hidden;">
                       {{ bar_chart|safe }}
                   </div>
               </div>
+        </div> -->
+        <div class="col-sm-12 col-lg-6 mb-4">
+            <div class="graph">
+                <h2>Group Bar Chart</h2>
+                <div style="width:100%; overflow:hidden;">
+                    {{ group_bar_chart|safe }}
+                </div>
+            </div>
           </div>
       </div>
 
