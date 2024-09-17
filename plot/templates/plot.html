@@ -5,9 +5,55 @@
 </head>
 {% block head %}
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<!-- font awasomeを使用 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
 {% endblock %}
 
 {% block content %}
+
+<!-- ヘッダー -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+      <div class="navbar-brand d-flex align-items-center">
+        <!-- 左側のアイコン -->
+        <span class="navbar-icon">
+          <i class="fas fa-columns"></i> <!-- ここはカスタムアイコンに変更可能 -->
+        </span>
+        <!-- お気に入りの星アイコン -->
+        <span class="mx-2">
+          <i class="fas fa-star"></i> 
+        </span>
+        <!-- Dashboardsテキストとスペース -->
+        <span class="ms-2">Dashboards</span> 
+        <span>/</span>
+        <span class="mx-2">Default</span>
+      </div>
+  
+      <!-- 右側の検索バーとアイコン -->
+      <div class="d-flex align-items-center">
+        <!-- 検索バー -->
+        <form class="d-none d-md-flex me-3">
+          <input class="form-control" type="search" placeholder="Search" aria-label="Search">
+        </form>
+        <!-- 右側のアイコン -->
+        <div class="navbar-icon mx-2">
+          <i class="fas fa-sun"></i> <!-- ダークモード切替のようなアイコン -->
+        </div>
+        <div class="navbar-icon mx-2">
+          <i class="fas fa-history"></i> <!-- 最近のアクティビティアイコン -->
+        </div>
+        <div class="navbar-icon mx-2">
+          <i class="fas fa-bell"></i> <!-- 通知アイコン -->
+        </div>
+        <div class="navbar-icon mx-2">
+          <i class="fas fa-th-large"></i> <!-- その他のメニューアイコン -->
+        </div>
+      </div>
+    </div>
+  </nav>
+  
+  <div class="px-5">
 <!-- 日付と表示方法選択フォーム -->
 <form method="get" class="mb-4">
     <div class="row">
@@ -33,82 +79,175 @@
     </div>
 </form>
 
+<!-- 概要 -->
+<div class="container-fluid mb-5">
+  <div class="row d-flex">
+    <!-- 左ブロック (全社利用状況) -->
+    <div class="col-lg-6 d-flex flex-column mb-5 px-4">
+      <h2 class="mb-3">全社利用状況</h2>
+      <div class="d-flex justify-content-between" style="gap: 10px;">
+        <div class="card p-3" style="background-color: #E3F2FD; border-radius: 20px; width: 28%; border: none;"> <!-- カードの幅を28%に設定 -->
+          <h6 class="text-start ms-2" style="font-size: 14px;">社員数</h6>
+          <h3 class="text-start ms-2" style="font-size: 28px;">1058人</h3>
+        </div>
+        <div class="card p-3" style="background-color: #E3F2FD; border-radius: 20px; width: 28%; border: none;">
+          <h6 class="text-start ms-2" style="font-size: 14px;">アクティブユーザ数</h6>
+          <h3 class="text-start ms-2" style="font-size: 28px;">400人</h3>
+          <p class="text-start text-success ms-2">+11.01%</p>
+        </div>
+        <div class="card p-3" style="background-color: #E3F2FD; border-radius: 20px; width: 28%; border: none;">
+          <h6 class="text-start ms-2" style="font-size: 14px;">利用率</h6>
+          <h3 class="text-start ms-2" style="font-size: 28px;">39.0%</h3>
+          <p class="text-start text-success ms-2">+11.01%</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右ブロック (ROI) -->
+    <div class="col-lg-6 d-flex flex-column mb-5 px-4">
+      <h2 class="mb-3">ROI</h2>
+      <div class="d-flex justify-content-between" style="gap: 10px;">
+        <div class="card p-3" style="background-color: #E3F2FD; border-radius: 20px; width: 28%; border: none;"> <!-- カードの幅を28%に設定 -->
+          <h6 class="text-start ms-2" style="font-size: 14px;">総削減時間</h6>
+          <h3 class="text-start ms-2" style="font-size: 28px;">76.8K時間</h3>
+          <p class="text-start text-danger ms-2">-8.2%</p>
+        </div>
+        <div class="card p-3" style="background-color: #E3F2FD; border-radius: 20px; width: 28%; border: none;">
+          <h6 class="text-start ms-2" style="font-size: 14px;">効果</h6>
+          <h3 class="text-start ms-2" style="font-size: 28px;">2.4億円</h3>
+          <p class="text-start text-success ms-2">+12.01%</p>
+        </div>
+        <div class="card p-3" style="background-color: #E3F2FD; border-radius: 20px; width: 28%; border: none;">
+          <h6 class="text-start ms-2" style="font-size: 14px;">コスト</h6>
+          <h3 class="text-start ms-2" style="font-size: 28px;">0.3億円</h3>
+          <p class="text-start text-danger ms-2">-5.01%</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- グラフやコンテンツ -->
 <div class="container-fluid">
-    <div class="title"><h1>Plotlyのグラフを描画</h1></div>
+  <div class="row px-2">
+      <!-- Line Chart -->
+      <div class="col-sm-12 col-lg-4 mb-4">
+          <div class="card" style="background-color: #f8f9fa; border-radius: 15px; border: none;">
+            <h5 class="text-start p-3">利用者推移</h5>
+              <div class="p-5"> <!-- コンテンツの外側に余白を追加 -->
+                  <div style="width:100%; overflow:hidden;">
+                      {{ line_chart|safe }}
+                  </div>
+              </div>
+          </div>
+      </div>
 
-    <div class="row">
-        <!-- Line Chart -->
-        <div class="col-sm-12 col-lg-6 mb-4">
-            <div class="graph">
-                <h2>Line Chart</h2>
-                <div style="width:100%; overflow:hidden;">
-                    {{ line_chart|safe }}
-                </div>
+      <!-- Bar Chart -->
+      <div class="col-sm-12 col-lg-4 mb-4">
+          <div class="card" style="background-color: #f8f9fa; border-radius: 15px; border: none;">
+            <h5 class="text-start p-3">部門別利用回数</h5>
+              <div class="p-5"> <!-- コンテンツの外側に余白を追加 -->
+                  <div style="width:100%; overflow:hidden;">
+                      {{ bar_chart|safe }}
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <!-- Word Cloud -->
+      <div class="col-sm-12 col-lg-4 mb-4">
+        <div class="card" style="background-color: #f8f9fa; border-radius: 15px; border: none;">
+          <h5 class="text-start p-3">利用者特徴分析</h5>
+            <div class="p-5"> <!-- コンテンツの外側に余白を追加 -->
+                <img src="{{ wordcloud_image_url }}" alt="WordCloud Image" class="img-fluid" style="width: 100%; height: auto;">
             </div>
         </div>
+      </div>
+  </div>
 
-        <!-- Bar Chart -->
-        <div class="col-sm-12 col-lg-6 mb-4">
-            <div class="graph">
-                <h2>Bar Chart</h2>
-                <div style="width:100%; overflow:hidden;">
-                    {{ bar_chart|safe }}
-                </div>
-            </div>
-        </div>
+  <!-- ボーダーラインを追加 -->
+  <hr style="border: 1px solid #A3A0A0; margin: 20px 0;"> <!-- スペースを空けてラインを追加 -->
+
+  <!-- プルダウンメニューを追加 -->
+  <div class="row justify-content-center my-5"> <!-- センターに配置、上に余白を追加 -->
+    <div class="col-sm-12 col-lg-3">
+      <select class="form-select">
+        <option selected>マーケティング本部</option>
+        <option value="1">営業本部</option>
+        <option value="2">IT本部</option>
+        <option value="3">人事本部</option>
+      </select>
+    </div>
+    <div class="col-sm-12 col-lg-3">
+      <select class="form-select">
+        <option selected>CRM部</option>
+        <option value="1">営業部</option>
+        <option value="2">技術部</option>
+        <option value="3">開発部</option>
+      </select>
+    </div>
+    <div class="col-sm-12 col-lg-3">
+      <select class="form-select">
+        <option selected>選択してください</option>
+        <option value="1">オプション1</option>
+        <option value="2">オプション2</option>
+      </select>
+    </div>
+  </div>
+
+
+  <div class="row px-2 pt-4">
+    <!-- User Bar Chart -->
+    <div class="col-sm-12 col-lg-4 mb-4">
+      <div class="card" style="background-color: #f8f9fa; border-radius: 15px; border: none;">
+        <h5 class="text-start p-3">ユーザ利用回数</h5>
+          <div class="p-5"> <!-- コンテンツの外側に余白を追加 -->
+              <div style="width:100%; overflow:hidden;">
+                  {{ user_bar_chart|safe }}
+              </div>
+          </div>
+      </div>
     </div>
 
-    <div class="row">
-        <!-- User Bar Chart -->
-        <div class="col-sm-12 col-lg-6 mb-4">
-            <div class="graph">
-                <h2>User Bar Chart</h2>
-                <div style="width:100%; overflow:hidden;">
-                    {{ user_bar_chart|safe }}
-                </div>
-            </div>
-        </div>
+      <!-- User active time Chart -->
+      <div class="col-sm-12 col-lg-4 mb-4">
+          <div class="card" style="background-color: #f8f9fa; border-radius: 15px; border: none;">
+            <h5 class="text-start p-3">利用時間帯</h5>
+              <div class="p-5"> <!-- コンテンツの外側に余白を追加 -->
+                  {% if user_active_time_chart %}
+                      <div style="width:100%; overflow:hidden;">
+                          {{ user_active_time_chart|safe }}
+                      </div>
+                  {% else %}
+                      <p>グラフデータがありません。</p>
+                  {% endif %}
+              </div>
+          </div>
+      </div>
 
-        <div class="col-sm-12 col-lg-6 mb-4">
-            <div class="graph">
-                <h2>User active time Chart</h2>
-                {% if user_active_time_chart %}
-                    <div style="width:100%; overflow:hidden;">
-                        {{ user_active_time_chart|safe }}
-                    </div>
-                {% else %}
-                    <p>グラフデータがありません。</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
+      <!-- category Bar Chart -->
+      <div class="col-sm-12 col-lg-4 mb-4">
+          <div class="card" style="background-color: #f8f9fa; border-radius: 15px; border: none;">
+            <h5 class="text-start p-3">カテゴリー別利用回数</h5>
+              <div class="p-5"> <!-- コンテンツの外側に余白を追加 -->
+                  <div style="width:100%; overflow:hidden;">
+                      {{ category_bar_chart|safe }}
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+</div>
 
-    <div class="row">
-        <div class="col-sm-12 col-lg-6 mb-4">
-            <div class="graph">
-                <h2>category Bar Chart</h2>
-                <div style="width:100%; overflow:hidden;">
-                    {{ category_bar_chart|safe }}
-                </div>
-            </div>
-        </div>
+  <!-- Export Link -->
+  <div class="row" style="margin: 0 0 30px;">
+    <div class="col-12 text-center"> <!-- ボタンを中央揃えに変更 -->
+        <a href="{% url 'plot:csv_export' %}" class="btn btn-light p-2" style="background-color: white; border: none;">
+            <!-- Font Awesomeのダウンロードアイコン -->
+            <i class="fas fa-download" style="font-size: 30px;"></i>
+        </a>
     </div>
-
-    <div class="row">
-        <!-- Word Cloud -->
-        <div class="col-sm-12 col-lg-6 mb-4">
-            <div class="graph">
-                <h2>WordCloud</h2>
-                <img src="{{ wordcloud_image_url }}" alt="WordCloud Image" class="img-fluid">
-            </div>
-        </div>
-    </div>
-
-    <!-- Export Link -->
-    <div class="row">
-        <div class="col-12">
-            <a href="{% url 'plot:csv_export' %}" class="btn btn-primary">エクスポート</a>
-        </div>
-    </div>
+  </div>
+</div>
 </div>
 {% endblock %}
