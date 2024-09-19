@@ -153,6 +153,9 @@ class ChartsView(TemplateView):
                 mail=df_1['mail'].iloc[0]
                 if mail: 
                     count_ind[mail] += 1
+                else:
+                    mail = "No Mail Address"
+                    count_ind[mail] += 1
                 # groupの特定
                 df_2 = self.df_graph[self.df_graph['oid'] == oid]
                 group_name=df_2['group_name'].iloc[0]
@@ -222,15 +225,23 @@ class ChartsView(TemplateView):
     def call_graphapi(self, request, *, context):
         try:
             # get mail by oid
-            api_result = requests.get(  # Use access token to call a web api
-                os.getenv("GRAPH_ENDPOINT"),
-                headers={'Authorization': 'Bearer ' + context['access_token']},
-                timeout=30,
+            url = "https://graph.microsoft.com/v1.0/users"
+            headers={'Authorization': 'Bearer ' + context['access_token']}
+            api_result = requests.get(
+                url, headers=headers,timeout=30
             ).json() if context.get('access_token') else "Did you forget to set the SCOPE environment variable?"
             user_data = api_result['value']
+            # 100件以上のユーザーがいる場合、@odata.nextLinkが含まれる
+            next_link = api_result.get('@odata.nextLink')
+            # ページング処理
+            while next_link:
+                api_result = requests.get(next_link, headers=headers,timeout=30).json()
+                user_data.extend(api_result['value'])
+                next_link = api_result.get('@odata.nextLink')
+            print("user_data:",user_data)
             user_mail_data = [{"oid": item["id"], "mail": item["mail"]} for item in user_data]
             df_user = pd.DataFrame(user_mail_data)
-
+            
             # group_id と group_nameの取得
             api_result = requests.get(  # Use access token to call a web api
                 "https://graph.microsoft.com/v1.0/groups",
@@ -259,7 +270,6 @@ class ChartsView(TemplateView):
 
             # df_graphにdf_userを追加（concatを使用）
             self.df_graph = pd.concat([self.df_graph, df_user], ignore_index=True)
-        
         except Exception as e:
             # エラーが発生した場合にエラーメッセージを返す
             return f"Graph API error occurred: {str(e)}"
