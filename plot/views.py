@@ -168,7 +168,6 @@ class ChartsView(TemplateView):
     def get_user_use_count(self, items):
         count_ind = defaultdict(int)
         count_group = defaultdict(int)
-        count = 0
         for item in items:
             count += 1
             oid = item.get('oid')
@@ -176,22 +175,15 @@ class ChartsView(TemplateView):
             if oid:
                 # メールアドレスの特定
                 df_1 = self.df_graph[self.df_graph['oid'] == oid]
-                # mail=df_1['mail'].iloc[0]
-                if not df_1.empty and len(df_1) > 0:
-                    mail = df_1['mail'].iloc[0]
-                else:
-                    mail = None  # または適切なデフォルト値を設定
-                print("mail",count,mail)
+                mail=df_1['mail'].iloc[0]
                 if mail: 
+                    count_ind[mail] += 1
+                else:
+                    mail = "No Mail Address"
                     count_ind[mail] += 1
                 # groupの特定
                 df_2 = self.df_graph[self.df_graph['oid'] == oid]
-                # group_name=df_2['group_name'].iloc[0]
-                if not df_2.empty and len(df_2) > 0:
-                    group_name = df_2['group_name'].iloc[0]
-                else:
-                    group_name = 'unknown'  # デフォルト値として'unknown'を設定
-                print("group",count,group_name)
+                group_name=df_2['group_name'].iloc[0]
                 if group_name: 
                     count_group[group_name] += 1
         # group_nameがnanではなく、unknownに変更
@@ -258,15 +250,23 @@ class ChartsView(TemplateView):
     def call_graphapi(self, request, *, context):
         try:
             # get mail by oid
-            api_result = requests.get(  # Use access token to call a web api
-                os.getenv("GRAPH_ENDPOINT"),
-                headers={'Authorization': 'Bearer ' + context['access_token']},
-                timeout=30,
+            url = "https://graph.microsoft.com/v1.0/users"
+            headers={'Authorization': 'Bearer ' + context['access_token']}
+            api_result = requests.get(
+                url, headers=headers,timeout=30
             ).json() if context.get('access_token') else "Did you forget to set the SCOPE environment variable?"
             user_data = api_result['value']
+            # 100件以上のユーザーがいる場合、@odata.nextLinkが含まれる
+            next_link = api_result.get('@odata.nextLink')
+            # ページング処理
+            while next_link:
+                api_result = requests.get(next_link, headers=headers,timeout=30).json()
+                user_data.extend(api_result['value'])
+                next_link = api_result.get('@odata.nextLink')
+            print("user_data:",user_data)
             user_mail_data = [{"oid": item["id"], "mail": item["mail"]} for item in user_data]
             df_user = pd.DataFrame(user_mail_data)
-
+            
             # group_id と group_nameの取得
             api_result = requests.get(  # Use access token to call a web api
                 "https://graph.microsoft.com/v1.0/groups",
@@ -295,11 +295,9 @@ class ChartsView(TemplateView):
 
             # df_graphにdf_userを追加（concatを使用）
             self.df_graph = pd.concat([self.df_graph, df_user], ignore_index=True)
-        
         except Exception as e:
             # エラーが発生した場合にエラーメッセージを返す
             return f"Graph API error occurred: {str(e)}"
-
 
 
 
