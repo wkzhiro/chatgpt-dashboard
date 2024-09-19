@@ -72,12 +72,21 @@ class ChartsView(TemplateView):
         start_date, end_date, period_type = get_date_range_and_period_type(self.request)
         type = self.request.GET.get('type', '')
 
+        #### 追加: フィルター条件の取得 ####
+        group_id = self.request.GET.get('group_id', '')
+        ####
+
         # 指定した期間内のデータを取得
         filtered_items = fetch_items_within_date_range(start_date, end_date)
 
         # mail addressとgroup情報の取得
         if self.df_graph.empty:
             self.call_graphapi(self.request, context=context['context'])
+
+        #### 追加: フィルター条件に基づくデータのフィルタリング ####
+        if group_id:
+            filtered_items = [item for item in filtered_items if str(item.get('group_id')) == group_id]
+        ####
 
         summary = self.get_summary(filtered_items, period_type, type)
         user_use_count,group_use_count = self.get_user_use_count(filtered_items)
@@ -101,6 +110,20 @@ class ChartsView(TemplateView):
         context["end_date"] = end_date
         context["period_type"] = period_type
         context["type"] = type  # type引数をコンテキストに追加
+
+        #### 追加: グループ情報をコンテキストに追加 ####
+        if not self.df_graph.empty:
+            groups_df = self.df_graph[['group_id', 'group_name']].drop_duplicates()
+            # 辞書のリストに変換
+            groups = groups_df.to_dict('records')
+            context['groups'] = groups
+        else:
+            context['groups'] = []
+        ####
+
+        #### 追加: 選択されたフィルター条件をコンテキストに追加 ####
+        context['selected_group_id'] = group_id
+        ####
 
 
         return context
@@ -276,6 +299,7 @@ class ChartsView(TemplateView):
         except Exception as e:
             # エラーが発生した場合にエラーメッセージを返す
             return f"Graph API error occurred: {str(e)}"
+
 
 
 

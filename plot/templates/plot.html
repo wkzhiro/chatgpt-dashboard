@@ -135,122 +135,141 @@
 </div>
 
 <!-- グラフやコンテンツ -->
+<style>
+  .card-row {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .card-column {
+    display: flex;
+    flex-direction: column;
+  }
+  .card-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .chart-container {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+</style>
+
 <div class="container-fluid">
-  <div class="row px-2">
+  
+
+    <div class="row card-row px-2">
       <!-- Line Chart -->
-      <div class="col-sm-12 col-lg-4 mb-4">
-          <div class="card" style="background-color: #f8f9fa; border-radius: 15px; border: none;">
-            <h5 class="text-start p-3">利用者推移</h5>
-              <div class="p-5"> <!-- コンテンツの外側に余白を追加 -->
-                  <div style="width:100%; overflow:hidden;">
-                      {{ line_chart|safe }}
-                  </div>
-              </div>
-          </div>
-      </div>
-
-      <!-- Bar Chart -->
-      <!-- <div class="col-sm-12 col-lg-4 mb-4">
-          <div class="card" style="background-color: #f8f9fa; border-radius: 15px; border: none;">
-            <h5 class="text-start p-3">部門別利用回数</h5>
-              <div class="p-5"> 
-                  <div style="width:100%; overflow:hidden;">
-                      {{ bar_chart|safe }}
-                  </div>
-              </div>
-        </div> -->
-        <div class="col-sm-12 col-lg-6 mb-4">
-            <div class="graph">
-                <h2>Group Bar Chart</h2>
-                <div style="width:100%; overflow:hidden;">
-                    {{ group_bar_chart|safe }}
-                </div>
+      <div class="col-sm-12 col-lg-4 mb-4 card-column">
+        <div class="card card-content" style="background-color: #f8f9fa; border-radius: 15px; border: none;">
+          <h5 class="text-start p-3">利用者推移</h5>
+          <div class="p-5 chart-container">
+            <div style="width:100%; overflow:hidden;">
+              {{ line_chart|safe }}
             </div>
           </div>
-      </div>
-
-      <!-- Word Cloud -->
-      <div class="col-sm-12 col-lg-4 mb-4">
-        <div class="card" style="background-color: #f8f9fa; border-radius: 15px; border: none;">
-          <h5 class="text-start p-3">利用者特徴分析</h5>
-            <div class="p-5"> <!-- コンテンツの外側に余白を追加 -->
-                <img src="{{ wordcloud_image_url }}" alt="WordCloud Image" class="img-fluid" style="width: 100%; height: auto;">
-            </div>
         </div>
       </div>
-  </div>
+  
+      <!-- Bar Chart -->
+      <div class="col-sm-12 col-lg-4 mb-4 card-column">
+        <div class="card card-content" style="background-color: #f8f9fa; border-radius: 15px; border: none;">
+          <h5 class="text-start p-3">部門別利用回数</h5>
+          <div class="p-5 chart-container">
+            <div style="width:100%; overflow:hidden;">
+              {{ group_bar_chart|safe }}
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Word Cloud -->
+      <div class="col-sm-12 col-lg-4 mb-4 card-column">
+        <div class="card card-content" style="background-color: #f8f9fa; border-radius: 15px; border: none;">
+          <h5 class="text-start p-3">利用者特徴分析</h5>
+          <div class="p-5 chart-container">
+            <img src="{{ wordcloud_image_url }}" alt="WordCloud Image" class="img-fluid" style="width: 100%; height: auto;">
+          </div>
+        </div>
+      </div>
+    </div>
 
   <!-- ボーダーラインを追加 -->
   <hr style="border: 1px solid #A3A0A0; margin: 20px 0;"> <!-- スペースを空けてラインを追加 -->
-
+  <form method="GET" action="{% url 'charts' %}" class="w-100">
   <!-- プルダウンメニューを追加 -->
   <div class="row justify-content-center my-5"> <!-- センターに配置、上に余白を追加 -->
     <div class="col-sm-12 col-lg-3">
-      <select class="form-select">
-        <option selected>マーケティング本部</option>
-        <option value="1">営業本部</option>
-        <option value="2">IT本部</option>
-        <option value="3">人事本部</option>
-      </select>
+        <select class="form-select">
+            <option selected>選択してください</option>
+            {% for group in groups %}
+                <option value="{{ group.group_id }}">{{ group.group_name }}</option>
+            {% endfor %}
+        </select>
     </div>
-    <div class="col-sm-12 col-lg-3">
-      <select class="form-select">
-        <option selected>CRM部</option>
+    <!-- <div class="col-sm-12 col-lg-3">
+      <select class="form-select" disabled>
+        <option selected>------</option>
         <option value="1">営業部</option>
         <option value="2">技術部</option>
         <option value="3">開発部</option>
       </select>
     </div>
     <div class="col-sm-12 col-lg-3">
-      <select class="form-select">
-        <option selected>選択してください</option>
+      <select class="form-select" disabled>
+        <option selected>------</option>
         <option value="1">オプション1</option>
         <option value="2">オプション2</option>
       </select>
+    </div> -->
+    <div class="col-sm-12 col-lg-3 d-flex align-items-end">
+      <button type="submit" class="btn btn-primary w-100">フィルター</button>
     </div>
+  </form>
   </div>
 
-
-  <div class="row px-2 pt-4">
+  <div class="row card-row px-2 pt-4">
     <!-- User Bar Chart -->
-    <div class="col-sm-12 col-lg-4 mb-4">
-      <div class="card" style="background-color: #f8f9fa; border-radius: 15px; border: none;">
+    <div class="col-sm-12 col-lg-4 mb-4 card-column">
+      <div class="card card-content" style="background-color: #f8f9fa; border-radius: 15px; border: none;">
         <h5 class="text-start p-3">ユーザ利用回数</h5>
-          <div class="p-5"> <!-- コンテンツの外側に余白を追加 -->
-              <div style="width:100%; overflow:hidden;">
-                  {{ user_bar_chart|safe }}
-              </div>
+        <div class="p-5 chart-container">
+          <div style="width:100%; overflow:hidden;">
+            {{ user_bar_chart|safe }}
           </div>
+        </div>
       </div>
     </div>
-
-      <!-- User active time Chart -->
-      <div class="col-sm-12 col-lg-4 mb-4">
-          <div class="card" style="background-color: #f8f9fa; border-radius: 15px; border: none;">
-            <h5 class="text-start p-3">利用時間帯</h5>
-              <div class="p-5"> <!-- コンテンツの外側に余白を追加 -->
-                  {% if user_active_time_chart %}
-                      <div style="width:100%; overflow:hidden;">
-                          {{ user_active_time_chart|safe }}
-                      </div>
-                  {% else %}
-                      <p>グラフデータがありません。</p>
-                  {% endif %}
-              </div>
-          </div>
+  
+    <!-- User active time Chart -->
+    <div class="col-sm-12 col-lg-4 mb-4 card-column">
+      <div class="card card-content" style="background-color: #f8f9fa; border-radius: 15px; border: none;">
+        <h5 class="text-start p-3">利用時間帯</h5>
+        <div class="p-5 chart-container">
+          {% if user_active_time_chart %}
+            <div style="width:100%; overflow:hidden;">
+              {{ user_active_time_chart|safe }}
+            </div>
+          {% else %}
+            <p>グラフデータがありません。</p>
+          {% endif %}
+        </div>
       </div>
-
-      <!-- category Bar Chart -->
-      <div class="col-sm-12 col-lg-4 mb-4">
-          <div class="card" style="background-color: #f8f9fa; border-radius: 15px; border: none;">
-            <h5 class="text-start p-3">カテゴリー別利用回数</h5>
-              <div class="p-5"> <!-- コンテンツの外側に余白を追加 -->
-                  <div style="width:100%; overflow:hidden;">
-                      {{ category_bar_chart|safe }}
-                  </div>
-              </div>
+    </div>
+  
+    <!-- category Bar Chart -->
+    <div class="col-sm-12 col-lg-4 mb-4 card-column">
+      <div class="card card-content" style="background-color: #f8f9fa; border-radius: 15px; border: none;">
+        <h5 class="text-start p-3">カテゴリー別利用回数</h5>
+        <div class="p-5 chart-container">
+          <div style="width:100%; overflow:hidden;">
+            {{ category_bar_chart|safe }}
           </div>
+        </div>
       </div>
+    </div>
   </div>
 </div>
 
