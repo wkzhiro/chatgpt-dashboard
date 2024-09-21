@@ -12,6 +12,8 @@ import os
 import json
 import requests
 import math
+import copy
+
 
 from collections import defaultdict
 
@@ -77,39 +79,44 @@ class ChartsView(TemplateView):
 
         # 指定した期間内のデータを取得
         filtered_items = fetch_items_within_date_range(start_date, end_date)
+        # グループ情報による変化があるグラフ用
+        filtered_items_by_groups = copy.deepcopy(filtered_items)
 
         # mail addressとgroup情報の取得
         if self.df_graph.empty:
             self.call_graphapi(self.request, context=context['context'])
 
-        # フィルター情報（部門）の取得
+        # グループ情報（部門）の取得
         group_id = self.request.GET.get('group_id', '')
 
-        # フィルター情報（部門）があれば、フィルターする
+        # グループ情報（部門）があれば、フィルターする
         if group_id:
-            filtered_items = [
+            filtered_items_by_groups = [
                 item for item in filtered_items 
                 if 'groups' in item and isinstance(item['groups'], list) and group_id in item['groups']
             ]
 
         summary = self.get_summary(filtered_items, period_type, type)
-        user_use_count,group_use_count = self.get_user_use_count(filtered_items)
         question_list = self.get_question_list(filtered_items)
-        time_periods_count = self.get_user_active_time(filtered_items)
-        category_count = self.get_category_count(filtered_items)
-        # print("filtered_items",category_count)
+        user_use_count,group_use_count = self.get_user_use_count(filtered_items)
+        if group_id:
+            user_use_count, _ = self.get_user_use_count(filtered_items_by_groups)
+        time_periods_count = self.get_user_active_time(filtered_items_by_groups)
+        category_count = self.get_category_count(filtered_items_by_groups)
 
+        #### 上グラフ ####
         context["line_chart"] = line_charts(summary, period_type)
-        context["bar_chart"] = bar_chart(summary, period_type)
         context["group_bar_chart"] = group_bar_chart(group_use_count)
-        context["user_bar_chart"] = user_bar_chart(user_use_count)
-        context["user_active_time_chart"] = user_active_time_chart(time_periods_count)
-        context["category_bar_chart"] = category_bar_chart(category_count)
-        
         # WordCloudの生成
         wordcloud_image_path = generate_and_save_wordcloud(question_list)
         context["wordcloud_image_url"] = os.path.join(settings.MEDIA_URL, wordcloud_image_path)
 
+        #### 下グラフ ####
+        context["user_bar_chart"] = user_bar_chart(user_use_count)
+        context["user_active_time_chart"] = user_active_time_chart(time_periods_count)
+        context["category_bar_chart"] = category_bar_chart(category_count)
+        
+        # context["bar_chart"] = bar_chart(summary, period_type)
         context["start_date"] = start_date
         context["end_date"] = end_date
         context["period_type"] = period_type
