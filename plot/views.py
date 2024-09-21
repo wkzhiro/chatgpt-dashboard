@@ -24,8 +24,11 @@ import io
 import urllib.request
 from django.utils.decorators import method_decorator
 
-# .envファイルを読み込む
+# .envファイルを読み込む.
 load_dotenv()
+
+# .envに保存されているものを優先にするように設定.
+# load_dotenv(override=True)
 
 # # 月ごとの集計を格納する辞書
 # monthly_summary = defaultdict(int)
@@ -72,10 +75,6 @@ class ChartsView(TemplateView):
         start_date, end_date, period_type = get_date_range_and_period_type(self.request)
         type = self.request.GET.get('type', '')
 
-        #### 追加: フィルター条件の取得 ####
-        group_id = self.request.GET.get('group_id', '')
-        ####
-
         # 指定した期間内のデータを取得
         filtered_items = fetch_items_within_date_range(start_date, end_date)
 
@@ -83,10 +82,15 @@ class ChartsView(TemplateView):
         if self.df_graph.empty:
             self.call_graphapi(self.request, context=context['context'])
 
-        #### 追加: フィルター条件に基づくデータのフィルタリング ####
+        # フィルター情報（部門）の取得
+        group_id = self.request.GET.get('group_id', '')
+
+        # フィルター情報（部門）があれば、フィルターする
         if group_id:
-            filtered_items = [item for item in filtered_items if str(item.get('group_id')) == group_id]
-        ####
+            filtered_items = [
+                item for item in filtered_items 
+                if 'groups' in item and isinstance(item['groups'], list) and group_id in item['groups']
+            ]
 
         summary = self.get_summary(filtered_items, period_type, type)
         user_use_count,group_use_count = self.get_user_use_count(filtered_items)
@@ -111,7 +115,7 @@ class ChartsView(TemplateView):
         context["period_type"] = period_type
         context["type"] = type  # type引数をコンテキストに追加
 
-        #### 追加: グループ情報をコンテキストに追加 ####
+        # グループ情報をコンテキストに追加
         if not self.df_graph.empty:
             groups_df = self.df_graph[['group_id', 'group_name']].drop_duplicates()
             # 辞書のリストに変換
@@ -119,12 +123,7 @@ class ChartsView(TemplateView):
             context['groups'] = groups
         else:
             context['groups'] = []
-        ####
-
-        #### 追加: 選択されたフィルター条件をコンテキストに追加 ####
         context['selected_group_id'] = group_id
-        ####
-
 
         return context
 
@@ -156,22 +155,11 @@ class ChartsView(TemplateView):
         end_ts = int(datetime.strptime(end_date, '%Y-%m-%d').timestamp())
         return [item for item in items if start_ts <= item.get('_ts', 0) <= end_ts]
 
-    # def get_monthly_summary(self, items):
-    #     summary = defaultdict(int)
-    #     for item in items:
-    #         ts = item.get('_ts')
-    #         if ts:
-    #             month_year = unix_timestamp_to_month(ts)
-    #             summary[month_year] += 1
-    #     return summary
-
     def get_user_use_count(self, items):
         count_ind = defaultdict(int)
         count_group = defaultdict(int)
         for item in items:
-            count += 1
             oid = item.get('oid')
-            print("oid",count,oid)
             if oid:
                 # メールアドレスの特定
                 df_1 = self.df_graph[self.df_graph['oid'] == oid]
@@ -202,6 +190,9 @@ class ChartsView(TemplateView):
         count = defaultdict(int)
         for item in items:
             categories = item.get('category', [])
+            if not categories:  # カテゴリが None や空の場合を処理
+                # print(f"Warning: No category found for item {item}")
+                count['Unknown'] += 1
             if isinstance(categories, list):
                 for category in categories:
                     count[category] += 1
@@ -263,7 +254,7 @@ class ChartsView(TemplateView):
                 api_result = requests.get(next_link, headers=headers,timeout=30).json()
                 user_data.extend(api_result['value'])
                 next_link = api_result.get('@odata.nextLink')
-            print("user_data:",user_data)
+            # print("user_data:",user_data)
             user_mail_data = [{"oid": item["id"], "mail": item["mail"]} for item in user_data]
             df_user = pd.DataFrame(user_mail_data)
             

@@ -158,8 +158,6 @@
 </style>
 
 <div class="container-fluid">
-  
-
     <div class="row card-row px-2">
       <!-- Line Chart -->
       <div class="col-sm-12 col-lg-4 mb-4 card-column">
@@ -198,36 +196,33 @@
 
   <!-- ボーダーラインを追加 -->
   <hr style="border: 1px solid #A3A0A0; margin: 20px 0;"> <!-- スペースを空けてラインを追加 -->
-  <form method="GET" action="{% url 'charts' %}" class="w-100">
-  <!-- プルダウンメニューを追加 -->
   <div class="row justify-content-center my-5"> <!-- センターに配置、上に余白を追加 -->
-    <div class="col-sm-12 col-lg-3">
-        <select class="form-select">
-            <option selected>選択してください</option>
-            {% for group in groups %}
-                <option value="{{ group.group_id }}">{{ group.group_name }}</option>
-            {% endfor %}
-        </select>
+    <div class="col-sm-12 col-lg-6 d-flex flex-column align-items-center"> <!-- プルダウンを中央に配置するためのコンテナ -->
+        <!-- フィルターフォーム -->
+        <form method="GET" action="{% url 'plot:charts' %}" class="w-100">
+            <div class="d-flex justify-content-center align-items-center"> <!-- 横並びに配置するためのflexコンテナ -->
+                <!-- プルダウンメニュー -->
+                <div class="col-sm-6">
+                    <select class="form-select" name="group_id">
+                        <option value="">部署名を選択してください</option>
+                        {% for group in groups %}
+                            <option value="{{ group.group_id }}" {% if request.GET.group_id == group.group_id %}selected{% endif %}>
+                                {{ group.group_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!-- フィルターボタン -->
+                <div class="ms-2"> <!-- マージンを追加してボタンの間隔を調整 -->
+                    <button type="submit" class="btn btn-primary">フィルター</button>
+                </div>
+                <!-- リセットボタン -->
+                <div class="ms-2"> <!-- マージンを追加してボタンの間隔を調整 -->
+                    <a href="{% url 'plot:plot' %}" class="btn btn-secondary">リセット</a>
+                </div>
+            </div>
+        </form>
     </div>
-    <!-- <div class="col-sm-12 col-lg-3">
-      <select class="form-select" disabled>
-        <option selected>------</option>
-        <option value="1">営業部</option>
-        <option value="2">技術部</option>
-        <option value="3">開発部</option>
-      </select>
-    </div>
-    <div class="col-sm-12 col-lg-3">
-      <select class="form-select" disabled>
-        <option selected>------</option>
-        <option value="1">オプション1</option>
-        <option value="2">オプション2</option>
-      </select>
-    </div> -->
-    <div class="col-sm-12 col-lg-3 d-flex align-items-end">
-      <button type="submit" class="btn btn-primary w-100">フィルター</button>
-    </div>
-  </form>
   </div>
 
   <div class="row card-row px-2 pt-4">
