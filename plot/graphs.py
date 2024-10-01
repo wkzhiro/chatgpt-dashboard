@@ -65,6 +65,8 @@ def group_bar_chart(user_data):
     values = list(user_data.values())
 
     sorted_groups_values = sorted(zip(groups, values), key=lambda x: x[1], reverse=True)
+    if not sorted_groups_values:  # 空の場合の処理を追加
+        return "データがありません"
     groups, values = zip(*sorted_groups_values)
 
     fig = go.Figure()
@@ -90,6 +92,8 @@ def user_bar_chart(user_data):
     values = list(user_data.values())
 
     sorted_users_values = sorted(zip(users, values), key=lambda x: x[1], reverse=True)
+    if not sorted_users_values:
+        return "ユーザーのデータがありません"
     users, values = zip(*sorted_users_values)
 
     fig = go.Figure()
@@ -111,13 +115,50 @@ def user_bar_chart(user_data):
     return fig.to_html(full_html=False, include_plotlyjs='cdn')
 
 
+# def category_bar_chart(user_data):
+#     users = list(user_data.keys())
+#     values = list(user_data.values())
+
+#     sorted_users_values = sorted(zip(users, values), key=lambda x: x[1], reverse=True)
+#     if not sorted_users_values:
+#         return "ユーザーのデータがありません"
+#     users, values = zip(*sorted_users_values)
+
+#     fig = go.Figure()
+#     fig.add_trace(go.Bar(x=users, y=values, name='category by User'))
+
+#     fig.update_layout(
+#         title="category by User",
+#         xaxis_title="category",
+#         yaxis_title="Count",
+#         autosize=True,
+#         height=400,  # 高さを固定
+#         xaxis=dict(
+#             tickmode='array',
+#             tickvals=users,
+#             ticktext=users,
+#             tickangle=-45
+#         )
+#     )
+#     return fig.to_html(full_html=False, include_plotlyjs='cdn')
+
 def category_bar_chart(user_data):
+    # "unknown" カテゴリを除外し、その件数を計算
+    unknown_count = user_data.pop('Unknown', 0)
+
+    # unknownを除外した後のユーザーとカウントのリストを取得
     users = list(user_data.keys())
     values = list(user_data.values())
 
+    # データが空の場合の処理
+    if not users:
+        return "ユーザーのデータがありません"
+
+    # カテゴリと値を並べ替え
     sorted_users_values = sorted(zip(users, values), key=lambda x: x[1], reverse=True)
     users, values = zip(*sorted_users_values)
 
+    # グラフの作成
     fig = go.Figure()
     fig.add_trace(go.Bar(x=users, y=values, name='category by User'))
 
@@ -134,10 +175,22 @@ def category_bar_chart(user_data):
             tickangle=-45
         )
     )
-    return fig.to_html(full_html=False, include_plotlyjs='cdn')
+
+    # グラフのHTML表現を取得
+    graph_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
+
+    # unknownの件数をメッセージとして追加
+    unknown_message = f"<p>unknown の件数: {unknown_count}</p>" if unknown_count > 0 else ""
+
+    # unknownメッセージとグラフを連結して返す
+    return unknown_message + graph_html
+
 
 
 def user_active_time_chart(time_periods_count):
+    # 全てのカウントがゼロかを確認
+    if all(count == 0 for count in time_periods_count.values()):
+        return "ユーザーのデータはありません"
     # 時間帯の順序を保つためにソート
     sorted_time_periods = sorted(time_periods_count.items(), key=lambda x: (int(x[0].split(':')[0]), int(x[0].split('〜')[1].split(':')[0])))
 

@@ -12,6 +12,8 @@ import os
 import json
 import requests
 import math
+import copy
+
 
 from collections import defaultdict
 
@@ -24,8 +26,11 @@ import io
 import urllib.request
 from django.utils.decorators import method_decorator
 
-# .envファイルを読み込む
+# .envファイルを読み込む.
 load_dotenv()
+
+# .envに保存されているものを優先にするように設定.
+# load_dotenv(override=True)
 
 # # 月ごとの集計を格納する辞書
 # monthly_summary = defaultdict(int)
@@ -74,34 +79,58 @@ class ChartsView(TemplateView):
 
         # 指定した期間内のデータを取得
         filtered_items = fetch_items_within_date_range(start_date, end_date)
+        # グループ情報による変化があるグラフ用
+        filtered_items_by_groups = copy.deepcopy(filtered_items)
 
         # mail addressとgroup情報の取得
         if self.df_graph.empty:
             self.call_graphapi(self.request, context=context['context'])
 
-        summary = self.get_summary(filtered_items, period_type, type)
-        user_use_count,group_use_count = self.get_user_use_count(filtered_items)
-        question_list = self.get_question_list(filtered_items)
-        time_periods_count = self.get_user_active_time(filtered_items)
-        category_count = self.get_category_count(filtered_items)
-        # print("filtered_items",category_count)
+        # グループ情報（部門）の取得
+        group_id = self.request.GET.get('group_id', '')
 
+        # グループ情報（部門）があれば、フィルターする
+        if group_id:
+            filtered_items_by_groups = [
+                item for item in filtered_items 
+                if 'groups' in item and isinstance(item['groups'], list) and group_id in item['groups']
+            ]
+
+        summary = self.get_summary(filtered_items, period_type, type)
+        question_list = self.get_question_list(filtered_items)
+        user_use_count,group_use_count = self.get_user_use_count(filtered_items)
+        if group_id:
+            user_use_count, _ = self.get_user_use_count(filtered_items_by_groups)
+        time_periods_count = self.get_user_active_time(filtered_items_by_groups)
+        category_count = self.get_category_count(filtered_items_by_groups)
+
+        #### 上グラフ ####
         context["line_chart"] = line_charts(summary, period_type)
-        context["bar_chart"] = bar_chart(summary, period_type)
         context["group_bar_chart"] = group_bar_chart(group_use_count)
-        context["user_bar_chart"] = user_bar_chart(user_use_count)
-        context["user_active_time_chart"] = user_active_time_chart(time_periods_count)
-        context["category_bar_chart"] = category_bar_chart(category_count)
-        
         # WordCloudの生成
         wordcloud_image_path = generate_and_save_wordcloud(question_list)
         context["wordcloud_image_url"] = os.path.join(settings.MEDIA_URL, wordcloud_image_path)
 
+        #### 下グラフ ####
+        context["user_bar_chart"] = user_bar_chart(user_use_count)
+        context["user_active_time_chart"] = user_active_time_chart(time_periods_count)
+        context["category_bar_chart"] = category_bar_chart(category_count)
+        
+        # context["bar_chart"] = bar_chart(summary, period_type)
         context["start_date"] = start_date
         context["end_date"] = end_date
         context["period_type"] = period_type
         context["type"] = type  # type引数をコンテキストに追加
 
+        # グループ情報をコンテキストに追加
+        if not self.df_graph.empty:
+            groups_df = self.df_graph[['group_id', 'group_name']].drop_duplicates()
+            # 辞書のリストに変換
+            groups = groups_df.to_dict('records')
+            context['groups'] = groups
+        else:
+            context['groups'] = []
+        context['selected_group_id'] = group_id
 
         return context
 
@@ -132,15 +161,6 @@ class ChartsView(TemplateView):
         start_ts = int(datetime.strptime(start_date, '%Y-%m-%d').timestamp())
         end_ts = int(datetime.strptime(end_date, '%Y-%m-%d').timestamp())
         return [item for item in items if start_ts <= item.get('_ts', 0) <= end_ts]
-
-    # def get_monthly_summary(self, items):
-    #     summary = defaultdict(int)
-    #     for item in items:
-    #         ts = item.get('_ts')
-    #         if ts:
-    #             month_year = unix_timestamp_to_month(ts)
-    #             summary[month_year] += 1
-    #     return summary
 
     def get_user_use_count(self, items):
         count_ind = defaultdict(int)
@@ -177,6 +197,9 @@ class ChartsView(TemplateView):
         count = defaultdict(int)
         for item in items:
             categories = item.get('category', [])
+            if not categories:  # カテゴリが None や空の場合を処理
+                # print(f"Warning: No category found for item {item}")
+                count['Unknown'] += 1
             if isinstance(categories, list):
                 for category in categories:
                     count[category] += 1
@@ -238,7 +261,7 @@ class ChartsView(TemplateView):
                 api_result = requests.get(next_link, headers=headers,timeout=30).json()
                 user_data.extend(api_result['value'])
                 next_link = api_result.get('@odata.nextLink')
-            print("user_data:",user_data)
+            # print("user_data:",user_data)
             user_mail_data = [{"oid": item["id"], "mail": item["mail"]} for item in user_data]
             df_user = pd.DataFrame(user_mail_data)
             
