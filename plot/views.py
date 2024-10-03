@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
 from plot.functions import CosmosDBClient, unix_timestamp_to_month, generate_and_save_wordcloud, unix_timestamp_to_hour
-from plot.graphs import line_charts, bar_chart, group_bar_chart,user_bar_chart, pie_chart, user_active_time_chart, category_bar_chart
+from plot.graphs import line_charts, bar_chart, group_bar_chart,user_bar_chart, pie_chart, user_active_time_chart, category_pie_chart
 
 from dotenv import load_dotenv
 import os
@@ -114,7 +114,7 @@ class ChartsView(TemplateView):
         #### 下グラフ ####
         context["user_bar_chart"] = user_bar_chart(user_use_count)
         context["user_active_time_chart"] = user_active_time_chart(time_periods_count)
-        context["category_bar_chart"] = category_bar_chart(category_count)
+        context["category_pie_chart"] = category_pie_chart(category_count)
         
         # context["bar_chart"] = bar_chart(summary, period_type)
         context["start_date"] = start_date
