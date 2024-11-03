@@ -170,7 +170,10 @@ class ChartsView(TemplateView):
             if oid:
                 # メールアドレスの特定
                 df_1 = self.df_graph[self.df_graph['oid'] == oid]
-                mail=df_1['mail'].iloc[0]
+                if not df_1.empty:
+                    mail = df_1['mail'].iloc[0]
+                else:
+                    mail = None
                 if mail: 
                     count_ind[mail] += 1
                 else:
@@ -178,7 +181,10 @@ class ChartsView(TemplateView):
                     count_ind[mail] += 1
                 # groupの特定
                 df_2 = self.df_graph[self.df_graph['oid'] == oid]
-                group_name=df_2['group_name'].iloc[0]
+                if not df_2.empty:
+                    group_name = df_2['group_name'].iloc[0]
+                else:
+                    group_name = None 
                 if group_name: 
                     count_group[group_name] += 1
         # group_nameがnanではなく、unknownに変更
