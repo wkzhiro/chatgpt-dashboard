@@ -142,7 +142,7 @@ def user_bar_chart(user_data):
 #     )
 #     return fig.to_html(full_html=False, include_plotlyjs='cdn')
 
-def category_bar_chart(user_data):
+def category_pie_chart(user_data):
     # "unknown" カテゴリを除外し、その件数を計算
     unknown_count = user_data.pop('Unknown', 0)
 
@@ -160,22 +160,13 @@ def category_bar_chart(user_data):
 
     # グラフの作成
     fig = go.Figure()
-    fig.add_trace(go.Bar(x=users, y=values, name='category by User'))
+    fig = go.Figure(data=[go.Pie(labels=users, values=values,direction='clockwise')])
 
     fig.update_layout(
-        title="category by User",
-        xaxis_title="category",
-        yaxis_title="Count",
         autosize=True,
         height=400,  # 高さを固定
-        xaxis=dict(
-            tickmode='array',
-            tickvals=users,
-            ticktext=users,
-            tickangle=-45
-        )
+        margin=dict(l=20, r=20, t=50, b=50),
     )
-
     # グラフのHTML表現を取得
     graph_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
 
