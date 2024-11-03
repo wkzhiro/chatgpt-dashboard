@@ -1,4 +1,4 @@
-azure-cosmos==1.1.28
+azure-cosmos==4.7.0
 Django==5.0.7
 plotly==5.23.0
 janome
